@@ -31,7 +31,7 @@ function Navbar(props) {
     <header className={`${props.className}`}>
       <div className="flex h-16 w-auto items-center justify-between px-5 md:mx-auto md:w-[80%] md:px-0 text-[#dbdcdd]">
         <div className="pb-2 font-outfit text-4xl font-semibold md:block text-white">
-          <Link href="/">moopa</Link>
+          <Link href="/">aninow</Link>
         </div>
 
         {/* Mobile Hamburger */}
