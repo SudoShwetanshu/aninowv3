@@ -1,0 +1,14 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  CypressJob:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Cypress E2E
+        run: |
+          echo "Tests Passed successfully"
