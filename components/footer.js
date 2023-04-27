@@ -13,7 +13,7 @@ function Footer() {
         <div className="flex items-center gap-24">
           <div className="md:flex grid items-center md:gap-10 gap-3">
             {/* <h1 className="font-outfit text-[2.56rem]">moopa</h1> */}
-            <h1 className="font-outfit text-[40px]">moopa</h1>
+            <h1 className="font-outfit text-[40px]">aninow</h1>
             <div>
               <p className="flex items-center gap-1 font-karla md:text-[0.81rem] text-[0.7rem] text-[#CCCCCC]">
                 &copy; {new Date().getFullYear()} aninow | Website Made by
