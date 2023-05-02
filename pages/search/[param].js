@@ -9,6 +9,7 @@ import Head from "next/head";
 import Footer from "../../components/footer";
 
 import { useAniList } from "../../lib/useAnilist";
+import Image from "next/image";
 
 const genre = [
   "Action",
@@ -53,6 +54,8 @@ export default function Card() {
 
   let hasil = null;
   let tipe = "ANIME";
+  let s = undefined;
+  let y = NaN;
 
   const query = router.query;
   if (query.param !== "anime" && query.param !== "manga") {
@@ -60,19 +63,42 @@ export default function Card() {
   } else if (query.param === "anime") {
     hasil = null;
     tipe = "ANIME";
+    if (
+      query.season !== "WINTER" &&
+      query.season !== "SPRING" &&
+      query.season !== "SUMMER" &&
+      query.season !== "FALL"
+    ) {
+      s = undefined;
+      y = NaN;
+    } else {
+      s = query.season;
+      y = parseInt(query.seasonYear);
+    }
   } else if (query.param === "manga") {
     hasil = null;
     tipe = "MANGA";
+    if (
+      query.season !== "WINTER" &&
+      query.season !== "SPRING" &&
+      query.season !== "SUMMER" &&
+      query.season !== "FALL"
+    ) {
+      s = undefined;
+      y = NaN;
+    } else {
+      s = query.season;
+      y = parseInt(query.seasonYear);
+    }
   }
-  // ;
+
+  // console.log(tags);
 
   const [search, setQuery] = useState(hasil);
   const [type, setSelectedType] = useState(tipe);
-  const [seasonYear, setSeasonYear] = useState();
-  const [season, setSeason] = useState();
   const [genres, setSelectedGenre] = useState();
-  const [perPage, setPerPage] = useState(10);
-  const [sort, setSelectedSort] = useState(["POPULARITY_DESC"]);
+  const [sort, setSelectedSort] = useState();
+  // console.log(data);
 
   const [isVisible, setIsVisible] = useState(false);
 
@@ -83,16 +109,15 @@ export default function Card() {
 
   async function advance() {
     setLoading(true);
-    const data = await aniAdvanceSearch(
-      search,
-      type,
-      seasonYear,
-      season,
-      genres,
-      page,
-      perPage,
-      sort
-    );
+    const data = await aniAdvanceSearch({
+      search: search,
+      type: type,
+      genres: genres,
+      page: page,
+      sort: sort,
+      season: s,
+      seasonYear: y,
+    });
     if (data.media.length === 0) {
       setNextPage(false);
     } else if (data !== null && page > 1) {
@@ -112,7 +137,7 @@ export default function Card() {
     setPage(1);
     setNextPage(true);
     advance();
-  }, [search, type, seasonYear, season, genres, perPage, sort]);
+  }, [search, type, genres, sort, s, y]);
 
   useEffect(() => {
     advance();
@@ -176,14 +201,14 @@ export default function Card() {
       </Head>
       <div className="bg-primary">
         <Navbar />
-        <div className="min-h-screen mt-10 mb-14 text-white items-center gap-5 lg:gap-0 flex flex-col">
-          <div className="w-screen px-10 lg:w-[80%] lg:h-[10rem] flex text-center lg:items-end lg:pb-16 justify-center lg:gap-10 gap-3 font-karla font-light">
+        <div className="min-h-screen mt-10 mb-14 text-white items-center gap-5 xl:gap-0 flex flex-col">
+          <div className="w-screen px-10 xl:w-[80%] xl:h-[10rem] flex text-center xl:items-end xl:pb-16 justify-center lg:gap-7 xl:gap-10 gap-3 font-karla font-light">
             <div className="text-start">
-              <h1 className="font-bold lg:pb-5 pb-3 hidden lg:block text-md pl-1 font-outfit">
+              <h1 className="font-bold xl:pb-5 pb-3 hidden lg:block text-md pl-1 font-outfit">
                 TITLE
               </h1>
               <input
-                className="lg:w-[297px] lg:h-[46px] h-[35px] w-[230px] xs:w-[280px] bg-secondary rounded-[10px] font-karla font-light text-[#ffffff89] text-center"
+                className="xl:w-[297px] md:w-[297px] lg:w-[230px] xl:h-[46px] h-[35px] xxs:w-[230px] xs:w-[280px] bg-secondary rounded-[10px] font-karla font-light text-[#ffffff89] text-center"
                 placeholder="search here..."
                 type="text"
                 onKeyDown={handleKeyDown}
@@ -193,9 +218,11 @@ export default function Card() {
 
             {/* TYPE */}
             <div className="hidden lg:block text-start">
-              <h1 className="font-bold pb-5 text-md pl-1 font-outfit">TYPE</h1>
+              <h1 className="font-bold xl:pb-5 pb-3 text-md pl-1 font-outfit">
+                TYPE
+              </h1>
               <select
-                className="w-[297px] h-[46px] bg-secondary rounded-[10px]  justify-between pl-[7.5rem] pr-5 flex items-center"
+                className="xl:w-[297px] xl:h-[46px] lg:h-[35px] lg:w-[230px] bg-secondary rounded-[10px]  justify-between flex items-center text-center"
                 value={type}
                 onChange={(e) => handleTipe(e)}
               >
@@ -209,9 +236,11 @@ export default function Card() {
 
             {/* SORT */}
             <div className="hidden lg:block text-start">
-              <h1 className="font-bold pb-5 text-md pl-1 font-outfit">SORT</h1>
+              <h1 className="font-bold xl:pb-5 lg:pb-3 text-md pl-1 font-outfit">
+                SORT
+              </h1>
               <select
-                className="w-[297px] h-[46px] bg-secondary rounded-[10px] flex items-center text-center"
+                className="xl:w-[297px] xl:h-[46px] lg:h-[35px] lg:w-[230px] bg-secondary rounded-[10px] flex items-center text-center"
                 onChange={(e) => {
                   setSelectedSort(e.target.value);
                   setData(null);
@@ -229,7 +258,7 @@ export default function Card() {
             {/* OPTIONS */}
             <div className="flex lg:gap-7 text-center gap-3 items-end">
               <div
-                className="lg:w-[73px] w-[50px] lg:h-[46px] h-[35px] bg-secondary rounded-[10px]  justify-center flex items-center cursor-pointer hover:bg-[#272b35] transition-all duration-300 group"
+                className="xl:w-[73px] w-[50px] xl:h-[46px] h-[35px] bg-secondary rounded-[10px]  justify-center flex items-center cursor-pointer hover:bg-[#272b35] transition-all duration-300 group"
                 onClick={handleVisible}
               >
                 <svg
@@ -250,7 +279,7 @@ export default function Card() {
 
               {/* TRASH ICON */}
               <div
-                className="lg:w-[73px] w-[50px] lg:h-[46px] h-[35px] bg-secondary rounded-[10px]  justify-center flex items-center cursor-pointer hover:bg-[#272b35] transition-all duration-300 group"
+                className="xl:w-[73px] w-[50px] xl:h-[46px] h-[35px] bg-secondary rounded-[10px]  justify-center flex items-center cursor-pointer hover:bg-[#272b35] transition-all duration-300 group"
                 onClick={trash}
               >
                 <svg
@@ -270,7 +299,7 @@ export default function Card() {
               </div>
             </div>
           </div>
-          <div className="w-screen lg:w-[64%] flex lg:justify-end lg:pl-0">
+          <div className="w-screen xl:w-[64%] flex xl:justify-end xl:pl-0">
             <AnimatePresence>
               {isVisible && (
                 <m.div
@@ -278,14 +307,14 @@ export default function Card() {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="lg:pb-16"
+                  className="xl:pb-16"
                 >
-                  <div className="text-start items-center lg:items-start flex w-screen lg:w-auto px-8 lg:px-0 flex-row justify-between lg:flex-col pb-5 ">
-                    <h1 className="font-bold lg:pb-5 text-md pl-1 font-outfit">
+                  <div className="text-start items-center xl:items-start flex w-screen xl:w-auto px-8 xl:px-0 flex-row justify-between xl:flex-col pb-5 ">
+                    <h1 className="font-bold xl:pb-5 text-md pl-1 font-outfit">
                       GENRE
                     </h1>
                     <select
-                      className="w-[195px] lg:w-[297px] lg:h-[46px] h-[35px] bg-secondary rounded-[10px] flex items-center text-center cursor-pointer hover:bg-[#272b35] transition-all duration-300"
+                      className="w-[195px] xl:w-[297px] xl:h-[46px] h-[35px] bg-secondary rounded-[10px] flex items-center text-center cursor-pointer hover:bg-[#272b35] transition-all duration-300"
                       onChange={(e) =>
                         setSelectedGenre(
                           e.target.value === "undefined"
@@ -304,8 +333,8 @@ export default function Card() {
                       })}
                     </select>
                   </div>
-                  <div className="lg:hidden text-start items-center lg:items-start flex w-screen lg:w-auto px-8 lg:px-0 flex-row justify-between lg:flex-col pb-5 ">
-                    <h1 className="font-bold lg:pb-5 text-md pl-1 font-outfit">
+                  <div className="xl:hidden text-start items-center xl:items-start flex w-screen xl:w-auto px-8 xl:px-0 flex-row justify-between xl:flex-col pb-5 ">
+                    <h1 className="font-bold xl:pb-5 text-md pl-1 font-outfit">
                       TYPE
                     </h1>
                     <select
@@ -321,8 +350,8 @@ export default function Card() {
                     </select>
                   </div>
 
-                  <div className="lg:hidden text-start items-center lg:items-start flex w-screen lg:w-auto px-8 lg:px-0 flex-row justify-between lg:flex-col ">
-                    <h1 className="font-bold lg:pb-5 text-md pl-1 font-outfit">
+                  <div className="xl:hidden text-start items-center xl:items-start flex w-screen xl:w-auto px-8 xl:px-0 flex-row justify-between xl:flex-col ">
+                    <h1 className="font-bold xl:pb-5 text-md pl-1 font-outfit">
                       SORT
                     </h1>
                     <select
@@ -347,12 +376,12 @@ export default function Card() {
             <AnimatePresence>
               <div
                 key="card-keys"
-                className="grid pt-3 lg:grid-cols-5 justify-items-center grid-cols-3 w-screen px-2 lg:w-auto lg:gap-10 gap-2 lg:gap-y-24 gap-y-12 overflow-hidden"
+                className="grid pt-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-6 justify-items-center grid-cols-2 xxs:grid-cols-3 w-screen px-2 xl:w-auto xl:gap-10 gap-2 xl:gap-y-24 gap-y-12 overflow-hidden"
               >
                 {loading
                   ? ""
                   : !data?.length && (
-                      <div className="w-screen text-[#ff7f57] lg:col-start-3 col-start-2 items-center flex justify-center text-center font-bold font-karla lg:text-2xl">
+                      <div className="w-screen text-[#ff7f57] xl:col-start-3 col-start-2 items-center flex justify-center text-center font-bold font-karla xl:text-2xl">
                         Oops!<br></br> Nothing's Found...
                       </div>
                     )}
@@ -362,7 +391,7 @@ export default function Card() {
                       <m.div
                         initial={{ scale: 0.9 }}
                         animate={{ scale: 1, transition: { duration: 0.35 } }}
-                        className="w-[115px] xs:w-[140px] lg:w-[228px]"
+                        className="w-[146px] xxs:w-[115px] xs:w-[135px] xl:w-[185px]"
                         key={index}
                       >
                         <Link
@@ -373,17 +402,16 @@ export default function Card() {
                           }
                           className=""
                         >
-                          <div
-                            className=" bg-[#3B3C41] lg:h-[313px] xs:h-[215px] h-[175px] hover:scale-105 scale-100 transition-all cursor-pointer duration-200 ease-out rounded-[10px]"
-                            style={{
-                              backgroundImage: `url(${anime.coverImage.extraLarge})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                            }}
+                          <Image
+                            className="object-cover bg-[#3B3C41] w-[146px] h-[208px] xxs:w-[115px] xxs:h-[163px] xs:w-[135px] xs:h-[192px] xl:w-[185px] xl:h-[265px] hover:scale-105 scale-100 transition-all cursor-pointer duration-200 ease-out rounded-[10px]"
+                            src={anime.coverImage.extraLarge}
+                            alt={anime.title.userPreferred}
+                            width={500}
+                            height={500}
                           />
                         </Link>
                         <Link href={`/anime/${anime.id}`}>
-                          <h1 className="font-outfit font-bold lg:text-[20px] pt-4 line-clamp-2">
+                          <h1 className="font-outfit font-bold xl:text-base text-[15px] pt-4 line-clamp-2">
                             {anime.status === "RELEASING" ? (
                               <span className="dots bg-green-500" />
                             ) : anime.status === "NOT_YET_RELEASED" ? (
@@ -392,7 +420,7 @@ export default function Card() {
                             {anime.title.userPreferred}
                           </h1>
                         </Link>
-                        <h2 className="font-outfit lg:text-[15px] text-[11px] font-light pt-2 text-[#8B8B8B]">
+                        <h2 className="font-outfit xl:text-[15px] text-[11px] font-light pt-2 text-[#8B8B8B]">
                           {anime.format || <p>-</p>} &#183;{" "}
                           {anime.status || <p>-</p>} &#183;{" "}
                           {anime.episodes || 0} Episodes
@@ -407,10 +435,10 @@ export default function Card() {
                       {[1, 2, 4, 5, 6, 7, 8].map((item) => (
                         <div
                           key={item}
-                          className="flex flex-col w-[115px] xs:w-[140px] lg:w-[228px] gap-5"
+                          className="flex flex-col w-[135px] xl:w-[185px] gap-5"
                           style={{ scale: 0.98 }}
                         >
-                          <Skeleton className="lg:h-[313px] xs:h-[215px] h-[175px]" />
+                          <Skeleton className="h-[192px] w-[135px] xl:h-[265px] xl:w-[185px]" />
                           <Skeleton width={110} height={30} />
                         </div>
                       ))}
@@ -421,7 +449,7 @@ export default function Card() {
               {!loading && page > 10 && nextPage && (
                 <button
                   onClick={() => setPage((p) => p + 1)}
-                  className="bg-secondary md:w-[30%] w-[80%] h-10 rounded-md"
+                  className="bg-secondary xl:w-[30%] w-[80%] h-10 rounded-md"
                 >
                   Load More
                 </button>

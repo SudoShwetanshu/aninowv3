@@ -12,6 +12,7 @@ export default function VideoPlayer({
   op,
   ed,
   title,
+  poster,
 }) {
   const [url, setUrl] = useState();
   const [source, setSource] = useState([]);
@@ -37,19 +38,22 @@ export default function VideoPlayer({
         const source = data.sources
           .map((items) => ({
             html: items.quality,
-            url: `https://cors.moopa.my.id/?url=${encodeURIComponent(
-              items.url
-            )}&referer=${encodeURIComponent(referer)}`,
+            url: `https://cors.moopa.my.id/${items.url}`,
           }))
+          //   url: `https://m3u8proxy.moopa.workers.dev/?url=${encodeURIComponent(
+          //     items.url
+          //   )}&referer=${encodeURIComponent(referer)}`,
+          // }))
           .sort((a, b) => {
             if (a.html === "default") return -1;
             if (b.html === "default") return 1;
             return 0;
           });
 
-        const defUrl = `https://cors.moopa.my.id/?url=${encodeURIComponent(
-          sumber.url
-        )}&referer=${encodeURIComponent(referer)}`;
+        const defUrl = `https://cors.moopa.my.id/${sumber.url}`;
+        // const defUrl = `https://m3u8proxy.moopa.workers.dev/?url=${encodeURIComponent(
+        //   sumber.url
+        // )}&referer=${encodeURIComponent(referer)}`;
 
         setUrl(defUrl);
         setSource(source);
@@ -60,8 +64,6 @@ export default function VideoPlayer({
     }
     compiler();
   }, [data]);
-
-  // console.log(source);
 
   return (
     <>
@@ -74,8 +76,13 @@ export default function VideoPlayer({
             title: `${title}`,
             autoplay: true,
             screenshot: true,
+            poster: poster ? poster : "",
           }}
-          style={{ width: "100%", height: "100%", margin: "0 auto 0" }}
+          style={{
+            width: "100%",
+            height: "100%",
+            margin: "0 auto 0",
+          }}
           getInstance={(art) => {
             art.on("ready", () => {
               const seek = art.storage.get(id);
@@ -94,9 +101,16 @@ export default function VideoPlayer({
 
             art.on("video:timeupdate", () => {
               if (!session) return;
+              const mediaSession = navigator.mediaSession;
               const currentTime = art.currentTime;
               const duration = art.duration;
               const percentage = currentTime / duration;
+
+              mediaSession.setPositionState({
+                duration: art.duration,
+                playbackRate: art.playbackRate,
+                position: art.currentTime,
+              });
 
               // console.log(percentage);
 
