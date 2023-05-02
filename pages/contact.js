@@ -7,7 +7,7 @@ const Contact = () => {
         <h1>Contact Us</h1>
         <p>If you have any questions or comments, please email us at:</p>
         <p>
-          <a href="mailto:factiven.org@gmail.com">factiven.org@gmail.com</a>
+          <a href="mailto:factiven.org@gmail.com">acharyashwetanshu@gmail.com</a>
         </p>
       </div>
     </Layout>

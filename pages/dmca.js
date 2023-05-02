@@ -5,7 +5,7 @@ export default function DMCA() {
   return (
     <>
       <Head>
-        <title>Moopa - DMCA</title>
+        <title>Aninow - DMCA</title>
         <meta name="DMCA" content="DMCA" />
         <meta property="og:title" content="DMCA" />
         <meta

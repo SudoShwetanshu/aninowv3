@@ -158,7 +158,7 @@ export default function Home({ detail, populars, sessions }) {
   return (
     <>
       <Head>
-        <title>Moopa</title>
+        <title>Aninow by SudoShwetanshu</title>
         <meta charSet="UTF-8"></meta>
         <meta name="twitter:card" content="summary_large_image" />
         <meta
