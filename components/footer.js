@@ -16,11 +16,11 @@ function Footer() {
         <div className="flex items-center gap-24">
           <div className="lg:flex grid items-center lg:gap-10 gap-3">
             {/* <h1 className="font-outfit text-[2.56rem]">moopa</h1> */}
-            <h1 className="font-outfit text-[40px]">aninow</h1>
+            <h1 className="font-outfit text-[40px]">moopa</h1>
             <div>
               <p className="flex items-center gap-1 font-karla lg:text-[0.81rem] text-[0.7rem] text-[#CCCCCC]">
-                &copy; {new Date().getFullYear()} aninow | Website Made by
-                SudoShwetanshu
+                &copy; {new Date().getFullYear()} moopa.live | Website Made by
+                Factiven
               </p>
               <p className="font-karla lg:text-[0.8rem] text-[0.65rem] text-[#9c9c9c]  lg:w-[520px] italic">
                 This site does not store any files on our server, we only linked
@@ -79,8 +79,8 @@ function Footer() {
                 <Link href="/dmca">DMCA</Link>
               </li>
               <li className="cursor-pointer hover:text-action">
-                <Link href="github.com/sudoshwetanshu">
-                  Githubb
+                <Link href="https://github.com/DevanAbinaya/Ani-Moopa">
+                  Github
                 </Link>
               </li>
             </ul>

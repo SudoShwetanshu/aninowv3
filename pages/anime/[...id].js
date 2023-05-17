@@ -20,6 +20,7 @@ import Modal from "../../components/modal";
 import { signIn, useSession } from "next-auth/react";
 import AniList from "../../components/media/aniList";
 import ListEditor from "../../components/listEditor";
+import { closestMatch } from "closest-match";
 
 const query = `
           query ($username: String, $status: MediaListStatus) {
@@ -140,16 +141,15 @@ const infoQuery = `query ($id: Int) {
     }
 }`;
 
-export default function Info() {
-  const { data: session, status } = useSession();
+export default function Info({ info, color }) {
+  const { data: session } = useSession();
   const [data, setData] = useState(null);
-  const [info, setInfo] = useState(null);
   const [episode, setEpisode] = useState(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statuses, setStatuses] = useState(null);
   const [stall, setStall] = useState(false);
-  const [color, setColor] = useState(null);
+  const [domainUrl, setDomainUrl] = useState("");
 
   const [showAll, setShowAll] = useState(false);
   const [open, setOpen] = useState(false);
@@ -164,13 +164,15 @@ export default function Info() {
     (data) => data.mediaRecommendation
   );
 
-  // const [log, setLog] = useState(null);
-  // console.log(rec);
-
   useEffect(() => {
+    const { protocol, host } = window.location;
+    const url = `${protocol}//${host}`;
+
+    setDomainUrl(url);
+
     const defaultState = {
       data: null,
-      info: null,
+      // info: null,
       episode: null,
       loading: true,
       statuses: null,
@@ -204,23 +206,23 @@ export default function Info() {
       if (id) {
         setLoading(false);
         try {
-          const [res, info] = await Promise.all([
+          const [res] = await Promise.all([
             fetch(`https://api.moopa.my.id/meta/anilist/info/${id?.[0]}`),
-            fetch("https://graphql.anilist.co/", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                query: infoQuery,
-                variables: {
-                  id: id?.[0],
-                },
-              }),
-            }),
+            // fetch("https://graphql.anilist.co/", {
+            //   method: "POST",
+            //   headers: {
+            //     "Content-Type": "application/json",
+            //   },
+            //   body: JSON.stringify({
+            //     query: infoQuery,
+            //     variables: {
+            //       id: id?.[0],
+            //     },
+            //   }),
+            // }),
           ]);
           const data = await res.json();
-          const infos = await info.json();
+          // const infos = await info.json();
 
           if (res.status === 500) {
             setEpisode(null);
@@ -229,36 +231,53 @@ export default function Info() {
           } else if (res.status === 404) {
             window.location.href("/404");
           }
-          setInfo(infos.data.Media);
+          // setInfo(infos.data.Media);
           // setLog(data);
 
-          const textColor = setTxtColor(infos.data.Media.coverImage?.color);
+          // const textColor = setTxtColor(infos.data.Media.coverImage?.color);
 
           if (!data || data?.episodes?.length === 0) {
             const res = await fetch(
-              `https://api.consumet.org/meta/anilist/info/${id[0]}?provider=9anime`
+              `https://api.moopa.my.id/anime/gogoanime/${info.title.romaji}`
             );
             const datas = await res.json();
-            if (res.status === 500) {
+
+            if (datas) {
+              const release = datas.results.map((i) => i.releaseDate);
+              const match = closestMatch(info.startDate.year, release);
+              const filter = datas.results.find((i) => i.releaseDate === match);
+
+              // const found = filter.find((i) => i.title === info.title.romaji);
+
+              // setLog(found);
+
+              if (filter) {
+                const res = await fetch(
+                  `https://api.moopa.my.id/anime/gogoanime/info/${filter.id}`
+                );
+                const dataA = await res.json();
+                setEpisode(dataA.episodes);
+                // setLog(dataA);
+              }
+            } else if (res.status === 500) {
               setEpisode(null);
               setEpiStatus("error");
               setError(datas.message);
             } else {
               setEpisode(datas.episodes);
             }
-            setColor({
-              backgroundColor: `${data?.color || "#ffff"}`,
-              color: textColor,
-            });
-            setStall(true);
+            // setColor({
+            //   backgroundColor: `${data?.color || "#ffff"}`,
+            //   color: textColor,
+            // });
           } else {
             setEpisode(data.episodes);
           }
 
-          setColor({
-            backgroundColor: `${data?.color || "#ffff"}`,
-            color: textColor,
-          });
+          // setColor({
+          //   backgroundColor: `${data?.color || "#ffff"}`,
+          //   color: textColor,
+          // });
 
           if (session?.user?.name) {
             const response = await fetch("https://graphql.anilist.co/", {
@@ -319,7 +338,7 @@ export default function Info() {
       }
     }
     fetchData();
-  }, [id, session?.user?.name]);
+  }, [id, session?.user?.name, info]);
 
   function handleOpen() {
     setOpen(true);
@@ -339,6 +358,21 @@ export default function Info() {
             ? info?.title?.romaji || info?.title?.english
             : "Retrieving Data..."}
         </title>
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta
+          name="twitter:title"
+          content={`Moopa - ${info.title.romaji || info.title.english}`}
+        />
+        <meta
+          name="twitter:description"
+          content={`${info.description?.slice(0, 180)}...`}
+        />
+        <meta
+          name="twitter:image"
+          content={`${domainUrl}/api/og?title=${
+            info.title.romaji || info.title.english
+          }&image=${info.bannerImage || info.coverImage.extraLarge}`}
+        />
       </Head>
       <Modal open={open} onClose={() => handleClose()}>
         <div>
@@ -699,7 +733,7 @@ export default function Info() {
                   data && (
                     <div className="flex h-[640px] flex-col gap-5 scrollbar-thin scrollbar-thumb-[#1b1c21] scrollbar-thumb-rounded-full overflow-y-scroll hover:scrollbar-thumb-[#2e2f37]">
                       {epiStatus === "ok" ? (
-                        episode?.length !== 0 ? (
+                        episode?.length !== 0 && episode ? (
                           episode?.map((epi, index) => {
                             return (
                               <div
@@ -707,7 +741,7 @@ export default function Info() {
                                 className="flex flex-col gap-3 px-2"
                               >
                                 <Link
-                                  href={`/anime/watch/${epi.id}/${data.id}/${
+                                  href={`/anime/watch/${epi.id}/${info.id}/${
                                     stall ? `9anime` : ""
                                   }`}
                                   className={`text-start text-sm lg:text-lg ${
@@ -743,13 +777,15 @@ export default function Info() {
                         //   Something went wrong, can't retrieve any episodes :/
                         // </p>
                         <div className="flex flex-col">
-                          <h1>{epiStatus} while retrieving data</h1>
+                          {/* <h1>{epiStatus} while retrieving data</h1> */}
                           <pre
                             className={`rounded-md ${getLanguageClassName(
                               "bash"
                             )}`}
                           >
-                            <code>{error}</code>
+                            <code>
+                              Something went wrong while retrieving data :/
+                            </code>
                           </pre>
                         </div>
                       )}
@@ -783,6 +819,46 @@ export default function Info() {
       </SkeletonTheme>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const { id } = context.query;
+
+  const res = await fetch("https://graphql.anilist.co/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      query: infoQuery,
+      variables: {
+        id: id?.[0],
+      },
+    }),
+  });
+
+  const json = await res.json();
+  const data = json?.data?.Media;
+
+  if (!data) {
+    return {
+      notFound: true,
+    };
+  }
+
+  const textColor = setTxtColor(data?.coverImage?.color);
+
+  const color = {
+    backgroundColor: `${data?.coverImage?.color || "#ffff"}`,
+    color: textColor,
+  };
+
+  return {
+    props: {
+      info: data,
+      color: color,
+    },
+  };
 }
 
 function convertSecondsToTime(sec) {

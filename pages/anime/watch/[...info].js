@@ -3,10 +3,7 @@ import Link from "next/link";
 import { closestMatch } from "closest-match";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import Modal from "../../../components/modal";
 import dynamic from "next/dynamic";
-
-import { useNotification } from "../../../lib/useNotify";
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../api/auth/[...nextauth]";
@@ -15,6 +12,8 @@ import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
 import { Navigasi } from "../..";
+import { ChevronDownIcon, ForwardIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/router";
 
 const VideoPlayer = dynamic(() =>
   import("../../../components/videoPlayer", { ssr: false })
@@ -30,6 +29,8 @@ export default function Info({ sessions, id, aniId, provider }) {
   const [loading, setLoading] = useState(false);
   const [playingTitle, setPlayingTitle] = useState(null);
   const [poster, setPoster] = useState(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const defaultState = {
@@ -107,14 +108,13 @@ export default function Info({ sessions, id, aniId, provider }) {
           }`
         );
         const data = await res.json();
-        const match = closestMatch(
-          aniData.title.romaji,
-          data.results.map((item) => item.title)
-        );
-        const anime = data.results.filter((item) => item.title === match);
+        const release = data.results.map((i) => i.releaseDate);
+
+        const match = closestMatch(aniData.startDate.year, release);
+        const anime = data.results.find((i) => i.releaseDate === match);
         if (anime.length !== 0) {
           const infos = await fetch(
-            `https://api.moopa.my.id/anime/gogoanime/info/${anime[0].id}`
+            `https://api.moopa.my.id/anime/gogoanime/info/${anime.id}`
           ).then((res) => res.json());
           epiFallback = infos.episodes;
         }
@@ -125,7 +125,7 @@ export default function Info({ sessions, id, aniId, provider }) {
         .filter((item) => item.id == id)
         .map((item) => item.number);
 
-      if (playingEpisode == 0) {
+      if (aniData.episodes.length === 0) {
         playingEpisode = epiFallback
           .filter((item) => item.id == id)
           .map((item) => item.number);
@@ -262,7 +262,7 @@ export default function Info({ sessions, id, aniId, provider }) {
 
     const artwork =
       poster && poster.length > 0
-        ? [{ src: poster[0].image, type: "image/jpeg" }]
+        ? [{ src: poster[0].image, sizes: "512x512", type: "image/jpeg" }]
         : undefined;
 
     mediaSession.metadata = new MediaMetadata({
@@ -279,7 +279,7 @@ export default function Info({ sessions, id, aniId, provider }) {
   return (
     <>
       <Head>
-        <title>{playingTitle}</title>
+        <title>{playingTitle || "Loading..."}</title>
       </Head>
 
       <SkeletonTheme baseColor="#232329" highlightColor="#2a2a32">
@@ -311,21 +311,79 @@ export default function Info({ sessions, id, aniId, provider }) {
                   data.episodes.length > 0 ? (
                     data.episodes
                       .filter((items) => items.id == id)
-                      .map((item) => (
-                        <div key={item.id} className="p-3 grid gap-2">
-                          <div className="text-xl font-outfit font-semibold line-clamp-2">
-                            <Link
-                              href={`/anime/${data.id}`}
-                              className="inline hover:underline"
-                            >
-                              {item.title ||
-                                data.title.romaji ||
-                                data.title.english}
-                            </Link>
+                      .map((item, index) => (
+                        <div className="flex justify-between" key={index}>
+                          <div key={item.id} className="p-3 grid gap-2 w-[60%]">
+                            <div className="text-xl font-outfit font-semibold line-clamp-1">
+                              <Link
+                                href={`/anime/${data.id}`}
+                                className="inline hover:underline"
+                              >
+                                {item.title ||
+                                  data.title.romaji ||
+                                  data.title.english}
+                              </Link>
+                            </div>
+                            <h4 className="text-sm font-karla font-light">
+                              Episode {item.number}
+                            </h4>
                           </div>
-                          <h4 className="text-sm font-karla font-light">
-                            Episode {item.number}
-                          </h4>
+                          <div className="w-[50%] flex gap-4 items-center justify-end px-4">
+                            <div className="relative">
+                              <select
+                                className="flex items-center gap-5 rounded-[3px] bg-secondary py-1 px-3 pr-8 font-karla appearance-none cursor-pointer"
+                                value={item.number}
+                                onChange={(e) => {
+                                  const selectedEpisode = data.episodes.find(
+                                    (episode) =>
+                                      episode.number ===
+                                      parseInt(e.target.value)
+                                  );
+                                  router.push(
+                                    `/anime/watch/${selectedEpisode.id}/${data.id}`
+                                  );
+                                }}
+                              >
+                                {data.episodes.map((episode) => (
+                                  <option
+                                    key={episode.number}
+                                    value={episode.number}
+                                  >
+                                    Episode {episode.number}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDownIcon className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" />
+                            </div>
+                            <button
+                              className={`${
+                                item.number === data.episodes.length
+                                  ? "pointer-events-none"
+                                  : ""
+                              } relative group`}
+                              onClick={() => {
+                                const currentEpisodeIndex =
+                                  data.episodes.findIndex(
+                                    (episode) => episode.number === item.number
+                                  );
+                                if (
+                                  currentEpisodeIndex !== -1 &&
+                                  currentEpisodeIndex < data.episodes.length - 1
+                                ) {
+                                  const nextEpisode =
+                                    data.episodes[currentEpisodeIndex + 1];
+                                  router.push(
+                                    `/anime/watch/${nextEpisode.id}/${data.id}`
+                                  );
+                                }
+                              }}
+                            >
+                              <span className="absolute z-[9999] -left-11 -top-14 p-2 shadow-xl rounded-md transform transition-all whitespace-nowrap bg-secondary lg:group-hover:block group-hover:opacity-1 hidden font-karla font-bold">
+                                Next Episode
+                              </span>
+                              <ForwardIcon className="w-6 h-6" />
+                            </button>
+                          </div>
                         </div>
                       ))
                   ) : (
@@ -334,18 +392,77 @@ export default function Info({ sessions, id, aniId, provider }) {
                         fallback
                           .filter((item) => item.id == id)
                           .map((item) => (
-                            <div key={item.id} className="p-3 grid gap-2">
-                              <div className="text-xl font-outfit font-semibold line-clamp-2">
-                                <Link
-                                  href={`/anime/${data.id}`}
-                                  className="inline hover:underline"
-                                >
-                                  {data.title.romaji || data.title.english}
-                                </Link>
+                            <div key={item.id} className="flex justify-between">
+                              <div className="p-3 grid gap-2 w-[60%]">
+                                <div className="text-xl font-outfit font-semibold line-clamp-2">
+                                  <Link
+                                    href={`/anime/${data.id}`}
+                                    className="inline hover:underline"
+                                  >
+                                    {data.title.romaji || data.title.english}
+                                  </Link>
+                                </div>
+                                <h4 className="text-sm font-karla font-light">
+                                  Episode {item.number}
+                                </h4>
                               </div>
-                              <h4 className="text-sm font-karla font-light">
-                                Episode {item.number}
-                              </h4>
+                              <div className="w-[50%] flex gap-4 items-center justify-end px-4">
+                                <div className="relative">
+                                  <select
+                                    className="flex items-center gap-5 rounded-[3px] bg-secondary py-1 px-3 pr-8 font-karla appearance-none cursor-pointer"
+                                    value={item.number}
+                                    onChange={(e) => {
+                                      const selectedEpisode = fallback.find(
+                                        (episode) =>
+                                          episode.number ===
+                                          parseInt(e.target.value)
+                                      );
+                                      router.push(
+                                        `/anime/watch/${selectedEpisode.id}/${data.id}`
+                                      );
+                                    }}
+                                  >
+                                    {fallback.map((episode) => (
+                                      <option
+                                        key={episode.number}
+                                        value={episode.number}
+                                      >
+                                        Episode {episode.number}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDownIcon className="absolute right-2 top-1/2 transform -translate-y-1/2 w-5 h-5 pointer-events-none" />
+                                </div>
+                                <button
+                                  className={`${
+                                    item.number === fallback.length
+                                      ? "pointer-events-none"
+                                      : ""
+                                  } relative group`}
+                                  onClick={() => {
+                                    const currentEpisodeIndex =
+                                      fallback.findIndex(
+                                        (episode) =>
+                                          episode.number === item.number
+                                      );
+                                    if (
+                                      currentEpisodeIndex !== -1 &&
+                                      currentEpisodeIndex < fallback.length - 1
+                                    ) {
+                                      const nextEpisode =
+                                        fallback[currentEpisodeIndex + 1];
+                                      router.push(
+                                        `/anime/watch/${nextEpisode.id}/${data.id}`
+                                      );
+                                    }
+                                  }}
+                                >
+                                  <span className="absolute z-[9999] -left-11 -top-14 p-2 shadow-xl rounded-md transform transition-all whitespace-nowrap bg-secondary lg:group-hover:block group-hover:opacity-1 hidden font-karla font-bold">
+                                    Next Episode
+                                  </span>
+                                  <ForwardIcon className="w-6 h-6" />
+                                </button>
+                              </div>
                             </div>
                           ))}
                     </>
@@ -460,7 +577,7 @@ export default function Info({ sessions, id, aniId, provider }) {
               <h1 className="text-xl font-karla pl-4 pb-5 font-semibold">
                 Up Next
               </h1>
-              <div className="grid gap-5 lg:px-5 px-2 py-2 scrollbar-thin scrollbar-thumb-[#313131] scrollbar-thumb-rounded-full">
+              <div className="flex flex-col gap-5 lg:pl-5 px-2 py-2 scrollbar-thin scrollbar-thumb-[#313131] scrollbar-thumb-rounded-full">
                 {data ? (
                   data.episodes.length > 0 ? (
                     data.episodes.some(

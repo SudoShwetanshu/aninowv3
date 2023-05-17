@@ -53,7 +53,7 @@ function Navbar(props) {
                 clipRule="evenodd"
               />
             </svg>
-          </button> /* */
+          </button>
         )}
 
         {/* Mobile Menu */}
